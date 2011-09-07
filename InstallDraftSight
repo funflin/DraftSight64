@@ -1,0 +1,75 @@
+#!/bin/bash
+operacion=$(zenity --list --text='¿Que desea hacer con DraftSight?' --radiolist --column "Elija" --column "Operacion" TRUE "Instalar" FALSE "Desinstalar")
+if [ ! -z $operacion ];then
+	if [ $operacion = 'Instalar' ]; then
+		debfile='DraftSight.deb'
+		if [ -f $debfile ]; then
+			echo "existe el fichero"
+		else
+			debfile=$(zenity --title="Seleccion fichero DraftSight deb" --file-selection --file-filter=*deb)
+		fi
+
+		zenity --info --text="Instalación de libdirectfb-extra libxcb-render-util0"
+		gksu 'apt-get install -y libdirectfb-extra libxcb-render-util0'
+		mkdir -p /tmp/ds/DEBIAN/
+		zenity --info --text="Desempaquetando"
+		dpkg-deb --control $debfile /tmp/ds/DEBIAN/
+		sudo dpkg-deb --extract $debfile /tmp/ds/
+		zenity --info --text="Instalando"
+		sudo cp -r /tmp/ds/opt/* /opt
+		sudo cp -r /tmp/ds/var/* /var
+		cd /tmp/ds/DEBIAN
+		sudo ./preinst
+		sudo ./postinst
+		sudo rm -rf /tmp/ds
+		zenity --info --text="Instalación completada"
+
+	elif [ $operacion = 'Desinstalar' ]; then
+	    zenity --question --text "¿Quieres continuar con el proceso de desistalación?"
+	    if [ $? = '0' ]; then
+
+		##############################
+		#Fichero prerm del instalador
+		##############################
+		COMPANY_NAME=dassault-systemes
+		PRODUCT_NAME=draftsight
+		FILE_EXT=(dwt dwg dxf)
+
+		SOURCE_MIME=/opt/$COMPANY_NAME/$PRODUCT_NAME/mime
+
+		for (( j = 0; j < ${#FILE_EXT[@]}; j++)); do
+  			EXT=${FILE_EXT[$j]}
+			gksu 'xdg-mime uninstall --novendor --mode system "$SOURCE_MIME/$COMPANY_NAME"_"$PRODUCT_NAME-$EXT.xml"'
+		done
+
+		PICTURE_SIZE=(16 22 32 48 64 128)
+
+		for (( i = 0; i < ${#PICTURE_SIZE[@]}; i++)); do
+		  SIZE=${PICTURE_SIZE[$i]}x${PICTURE_SIZE[$i]}
+		  sudo xdg-icon-resource uninstall --noupdate --context apps --mode system --size ${PICTURE_SIZE[$i]} "$COMPANY_NAME.$PRODUCT_NAME"
+		  sudo xdg-icon-resource uninstall --noupdate --context apps --theme gnome --mode system --size ${PICTURE_SIZE[$i]} "$COMPANY_NAME.$PRODUCT_NAME"
+		  for (( j = 0; j < ${#FILE_EXT[@]}; j++)); do
+		    EXT=${FILE_EXT[$j]}
+		    FILE="$FILE_BASE-$EXT.png"
+		    sudo xdg-icon-resource uninstall --noupdate --context mimetypes --mode system --size ${PICTURE_SIZE[$i]} "application-vnd.$COMPANY_NAME.$PRODUCT_NAME-$EXT"
+		    sudo xdg-icon-resource uninstall --noupdate --context mimetypes --theme gnome --mode system --size ${PICTURE_SIZE[$i]} "application-vnd.$COMPANY_NAME.$PRODUCT_NAME-$EXT"
+		  done
+		done
+		sudo xdg-icon-resource forceupdate
+		sudo xdg-desktop-menu uninstall --novendor --mode system "$SOURCE_MIME/$COMPANY_NAME"_"$PRODUCT_NAME.desktop"
+
+		if [ -x /usr/sbin/update-mime ]; then
+		    sudo update-mime
+		fi
+		##############################
+		#Fichero prerm del instalador
+		##############################
+		sudo rm -fr /opt/dassault-systemes
+		sudo rm -fr /var/opt/dassault-systemes
+	   fi
+	fi
+fi
+
+
+
+
