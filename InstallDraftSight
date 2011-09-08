@@ -1,8 +1,8 @@
 #!/bin/bash
 operacion=$(zenity --list --text='¿Que desea hacer con DraftSight?' --radiolist --column "Elija" --column "Operacion" TRUE "Instalar" FALSE "Desinstalar")
 if [ ! -z $operacion ];then
-	if [ $operacion = 'Instalar' ]; then
-		debfile='DraftSight.deb'
+	if [ $operacion = "Instalar" ]; then
+		debfile="DraftSight.deb"
 		if [ -f $debfile ]; then
 			echo "existe el fichero"
 		else
@@ -24,7 +24,7 @@ if [ ! -z $operacion ];then
 		sudo rm -rf /tmp/ds
 		zenity --info --text="Instalación completada"
 
-	elif [ $operacion = 'Desinstalar' ]; then
+	elif [ $operacion = "Desinstalar" ]; then
 	    zenity --question --text "¿Quieres continuar con el proceso de desistalación?"
 	    if [ $? = '0' ]; then
 
